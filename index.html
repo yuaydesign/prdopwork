@@ -167,7 +167,7 @@
 <script>
   // ==========================================
   // URL ของ Google Apps Script ที่รันเป็น API
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwqC_qefP5bLWycmMpoBXwKQKyBp5OUmEG6GR3TJi5TqlQx4HcVJ2EyHKzy5Tff_CPU/exec"; 
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwU3DTwWyVYT7xdxjU5n_ELjY0oPXdLemvdC9ZAoQRSiSu30h-REwYnL5B4Fp8ODrCi/exec"; 
   // ==========================================
 
   const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
@@ -186,7 +186,7 @@
     initSelects();
     loadProfile();
     loadCategories();
-    loadData(); 
+    loadData(); // ดึงข้อมูลตอนเปิดหน้าแอป
 
     document.getElementById('taskDetail').addEventListener('keydown', function(e) {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -284,7 +284,7 @@
     });
   }
 
-  // ดึงข้อมูล 100% เลี่ยง Cache และปัญหา CORS Error
+  // ปรับการโหลดข้อมูลให้เสถียรบน Github Pages 100%
   async function loadData() {
     let data = localStorage.getItem(getStorageKey());
     currentTasks = data ? JSON.parse(data) : [];
@@ -312,6 +312,7 @@
         } catch (parseError) {
           console.log("CORS/Script Error, response was:", responseText);
         }
+
       } catch(e) {
         console.log("Fetch error:", e);
       }
@@ -319,12 +320,13 @@
     }
   }
 
-  // ซิงค์ข้อมูลเลี่ยงการตรวจจับ CORS ของ Browser 100%
+  // ปรับการส่งข้อมูลให้เลี่ยงปัญหา CORS บน GitHub แบบ 100%
   function syncToDatabase() {
     const monthNum = parseInt(document.getElementById('selMonth').value);
     const monthStr = thaiMonths[monthNum - 1];
     const year = document.getElementById('selYear').value;
     const payload = {
+      action: 'saveData',
       monthYear: `${monthStr} ${year}`,
       fullName: document.getElementById('empName').value,
       position: document.getElementById('empPosition').value,
@@ -332,10 +334,10 @@
     };
 
     if (typeof google !== 'undefined' && google.script && google.script.run) {
-      // กรณียังเปิดผ่าน Apps Script อยู่
+      // ทำงานผ่าน Apps Script โดยตรง
       google.script.run.saveRecordToDatabase(payload);
     } else if (WEB_APP_URL && WEB_APP_URL.startsWith("http")) {
-      // กรณีรันบน GitHub Pages (เข้ารหัส payload แล้วยิงเป็น Form ธรรมดา ป้องกันเบราว์เซอร์บล็อก)
+      // ทำงานผ่าน GitHub Pages
       try {
         fetch(WEB_APP_URL, {
           method: 'POST',
