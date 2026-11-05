@@ -1,667 +1,91 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🌸 Smart Work Report</title>
-  
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/docx@7.3.0/build/index.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+// กำหนด ID ของ Google Sheets เพื่อเป็น Database / Backup
+const SHEET_ID = '1oUEnoXoVheza0RlbRpTrO57h6a0-MCqSX__u8FI6mbg';
 
-  <style>
-    body {
-      font-family: 'Prompt', sans-serif;
-      background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
-      color: #4a4a4a;
-      padding: 30px 0;
-      min-height: 100vh;
-    }
-    .main-container {
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 24px;
-      padding: 40px;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.08);
-      max-width: 950px;
-      margin: 0 auto;
-      border: 3px solid #fff;
-    }
-    .header-title { 
-      color: #5c7cfa; 
-      font-weight: 700; 
-      text-shadow: 1px 1px 0px rgba(255,255,255,1); 
-    }
-    .form-control, .form-select {
-      border-radius: 12px;
-      border: 1px solid #dbe4ff;
-      padding: 10px 15px;
-      background-color: #f8f9fa;
-      transition: all 0.3s ease;
-    }
-    .form-control:focus, .form-select:focus {
-      border-color: #748ffc;
-      box-shadow: 0 0 0 0.25rem rgba(116, 143, 252, 0.25);
-      background-color: #fff;
-    }
-    .task-list { max-height: 500px; overflow-y: auto; padding-right: 5px; }
-    .task-item { 
-      border-left: 6px solid #ffb3c6; 
-      background: #fff0f3; 
-      margin-bottom: 12px; 
-      padding: 15px; 
-      border-radius: 12px; 
-      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-      transition: transform 0.2s; 
-    }
-    .task-item:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.05); }
-    .btn-export { 
-      background: linear-gradient(90deg, #38d9a9, #20c997); 
-      color: white; 
-      border: none; 
-      font-weight: 600; 
-      border-radius: 50px;
-      padding: 10px 25px;
-      box-shadow: 0 4px 15px rgba(32, 201, 151, 0.3);
-    }
-    .btn-export:hover { background: linear-gradient(90deg, #20c997, #12b886); color: white; transform: scale(1.02); }
-    .btn-primary { 
-      background: linear-gradient(90deg, #748ffc, #5c7cfa); 
-      border: none; 
-      border-radius: 50px;
-      font-weight: 600;
-      padding: 10px 25px;
-      box-shadow: 0 4px 15px rgba(92, 124, 250, 0.3);
-    }
-    .btn-primary:hover { background: linear-gradient(90deg, #5c7cfa, #4c6ef5); transform: scale(1.02); }
-    .section-box {
-      background: #f8f9fa;
-      border-radius: 16px;
-      padding: 25px;
-      border: 1px dashed #bac8ff;
-    }
-    
-    /* Footer Styling */
-    .app-footer {
-      color: #3b5bdb;
-      font-size: 0.95rem;
-      padding-top: 25px;
-      padding-bottom: 15px;
-      font-weight: 500;
-    }
-  </style>
-</head>
-<body>
+function setup() {
+  SpreadsheetApp.openById(SHEET_ID);
+  Logger.log("✅ ยืนยันสิทธิ์สำเร็จเรียบร้อย");
+}
 
-<div class="container main-container">
-  <h3 class="text-center header-title mb-4">✨ ระบบบันทึกผลการปฏิบัติงานประจำเดือน ✨</h3>
-  
-  <!-- ส่วนข้อมูลบุคคล -->
-  <div class="row g-3 mb-4 pb-4" style="border-bottom: 2px dashed #dbe4ff;">
-    <div class="col-md-3">
-      <label class="form-label text-primary fw-bold">🗓️ เดือน</label>
-      <select id="selMonth" class="form-select" onchange="loadData()"></select>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label text-primary fw-bold">📅 ปี (พ.ศ.)</label>
-      <select id="selYear" class="form-select" onchange="loadData()"></select>
-    </div>
-    <div class="col-md-6">
-      <label class="form-label fw-bold">👤 ชื่อ-สกุล</label>
-      <input type="text" id="empName" class="form-control" placeholder="ระบุชื่อ-สกุล" value="นายวรรัตน์ จันทร์เจริญ" onchange="loadData(); saveProfile();">
-    </div>
-    <div class="col-md-6">
-      <label class="form-label fw-bold">💼 ตำแหน่ง</label>
-      <input type="text" id="empPosition" class="form-control" placeholder="ระบุตำแหน่ง" value="นักวิชาการเผยแพร่ปฏิบัติการ" onchange="saveProfile()">
-    </div>
-    <div class="col-md-6">
-      <label class="form-label fw-bold">🏢 ประเภทบุคลากร</label>
-      <select id="empType" class="form-select" onchange="saveProfile()">
-        <option value="ข้าราชการ">ข้าราชการ</option>
-        <option value="พนักงานราชการ">พนักงานราชการ</option>
-      </select>
-    </div>
-  </div>
+function sendResponse(response) {
+  return ContentService.createTextOutput(JSON.stringify(response))
+    .setMimeType(ContentService.MimeType.JSON);
+}
 
-  <!-- ส่วนบันทึกงาน -->
-  <div class="row g-3 mb-4 section-box">
-    <h5 class="text-primary fw-bold mb-2">📝 บันทึกรายการปฏิบัติงาน</h5>
-    <div class="col-md-12">
-      <label class="form-label fw-semibold">📌 ประเภทงาน</label>
-      <div class="d-flex gap-2">
-        <select id="taskCategory" class="form-select" onchange="checkNewCategory()"></select>
-        <button type="button" id="btnDeleteCategory" class="btn btn-outline-danger d-none" onclick="deleteCustomCategory()" title="ลบหมวดหมู่นี้">🗑️</button>
-      </div>
-    </div>
-    <div class="col-md-12 d-none" id="newCategoryDiv">
-      <input type="text" id="newCategoryInput" class="form-control" placeholder="พิมพ์ชื่อประเภทงานใหม่ที่นี่...">
-    </div>
-    <div class="col-md-12">
-      <label class="form-label fw-semibold">📝 รายละเอียดงาน / ผลความคืบหน้า</label>
-      <textarea id="taskDetail" class="form-control" rows="3" placeholder="ระบุรายละเอียดงานที่ทำ... (กด Enter เพื่อเพิ่มงาน)"></textarea>
-    </div>
-    <div class="col-md-12 text-end mt-3">
-      <button class="btn btn-primary px-4" onclick="addTask()">+ เพิ่มผลงาน</button>
-    </div>
-  </div>
-
-  <!-- ส่วนแสดงผล -->
-  <div class="d-flex justify-content-between align-items-center mb-3 mt-5">
-    <h5 class="mb-0 fw-bold" style="color: #4a4a4a;">📁 ผลงานในเดือนนี้</h5>
-    <button class="btn btn-export px-4" onclick="generateWord()">📥 โหลดไฟล์ Word</button>
-  </div>
-  
-  <div id="taskListContainer" class="task-list mt-3">
-    <!-- รายการงานจะแสดงที่นี่ -->
-  </div>
-
-</div>
-
-<!-- Footer Credits -->
-<div class="container text-center app-footer mt-3">
-  <p class="mb-1 fw-bold fs-6">© 2026 ระบบบันทึกผลการปฏิบัติงานประจำเดือน</p>
-  <p class="mb-0 opacity-75" style="font-size: 0.9rem;">พัฒนาโดย นายวรรัตน์ จันทร์เจริญ | นักวิชาการเผยแพร่ปฏิบัติการ | กลุ่มสื่อสารองค์กร สลก.</p>
-</div>
-
-<script>
-  // ==========================================
-  // URL ของ Google Apps Script ที่รันเป็น API
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwU3DTwWyVYT7xdxjU5n_ELjY0oPXdLemvdC9ZAoQRSiSu30h-REwYnL5B4Fp8ODrCi/exec"; 
-  // ==========================================
-
-  const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-  
-  let defaultCategories = [
-    "1. เขียนข่าว / ถ่ายภาพ / ถ่ายภาพเคลื่อนไหว เผยแพร่ประชาสัมพันธ์ ผ่านช่องทางออนไลน์ ของกรมคุมประพฤติ",
-    "2. ออกแบบ Infographic (ภารกิจตามนโยบาย / ข้อสั่งการ)",
-    "3. VDO Presentation / VDO Footage",
-    "4. งานอื่น ๆ ที่ได้รับมอบหมาย"
-  ];
-  
-  let currentTasks = [];
-  let isFetching = false;
-  
-  window.onload = function() {
-    initSelects();
-    loadProfile();
-    loadCategories();
-    loadData(); // ดึงข้อมูลตอนเปิดหน้าแอป
-
-    document.getElementById('taskDetail').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault(); 
-        addTask();
-      }
-    });
-  };
-
-  function initSelects() {
-    const d = new Date();
-    const selMonth = document.getElementById('selMonth');
-    thaiMonths.forEach((m, idx) => { selMonth.options.add(new Option(m, idx + 1)); });
-    selMonth.value = d.getMonth() + 1; 
-
-    const selYear = document.getElementById('selYear');
-    for(let i = 2569; i <= 2579; i++) {
-      selYear.options.add(new Option(i, i));
-    }
-    let currentBE = d.getFullYear() + 543;
-    if(currentBE < 2569) currentBE = 2569;
-    if(currentBE > 2579) currentBE = 2579;
-    selYear.value = currentBE;
-  }
-
-  function getStorageKey() {
-    const m = document.getElementById('selMonth').value;
-    const y = document.getElementById('selYear').value;
-    return `work_report_${y}_${m}`;
-  }
-
-  function saveProfile() {
-    localStorage.setItem('empName', document.getElementById('empName').value);
-    localStorage.setItem('empPosition', document.getElementById('empPosition').value);
-    localStorage.setItem('empType', document.getElementById('empType').value);
-  }
-
-  function loadProfile() {
-    if(localStorage.getItem('empName')) document.getElementById('empName').value = localStorage.getItem('empName');
-    if(localStorage.getItem('empPosition')) document.getElementById('empPosition').value = localStorage.getItem('empPosition');
-    if(localStorage.getItem('empType')) document.getElementById('empType').value = localStorage.getItem('empType');
-  }
-
-  function loadCategories() {
-    let savedCats = JSON.parse(localStorage.getItem('customCategories')) || [];
-    let allCats = [...defaultCategories, ...savedCats];
-    
-    const sel = document.getElementById('taskCategory');
-    sel.innerHTML = "";
-    allCats.forEach(c => { sel.options.add(new Option(c, c)); });
-    sel.options.add(new Option("✨ + เพิ่มหมวดหมู่ใหม่...", "NEW"));
-
-    checkNewCategory(); 
-  }
-
-  function checkNewCategory() {
-    const val = document.getElementById('taskCategory').value;
-    const newCatDiv = document.getElementById('newCategoryDiv');
-    const btnDelCat = document.getElementById('btnDeleteCategory');
-    let savedCats = JSON.parse(localStorage.getItem('customCategories')) || [];
-
-    if(val === "NEW") {
-      newCatDiv.classList.remove('d-none');
-      document.getElementById('newCategoryInput').focus();
-      btnDelCat.classList.add('d-none');
-    } else {
-      newCatDiv.classList.add('d-none');
-      if (savedCats.includes(val)) {
-        btnDelCat.classList.remove('d-none');
-      } else {
-        btnDelCat.classList.add('d-none');
-      }
-    }
-  }
-
-  function deleteCustomCategory() {
-    const val = document.getElementById('taskCategory').value;
-    Swal.fire({
-      title: 'ลบหมวดหมู่นี้?',
-      text: `คุณต้องการลบหมวดหมู่ "${val}" ใช่หรือไม่?`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#ff8787',
-      cancelButtonColor: '#adb5bd',
-      confirmButtonText: 'ลบเลย!',
-      cancelButtonText: 'ยกเลิก'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        let savedCats = JSON.parse(localStorage.getItem('customCategories')) || [];
-        savedCats = savedCats.filter(c => c !== val);
-        localStorage.setItem('customCategories', JSON.stringify(savedCats));
-        loadCategories(); 
-        Swal.fire({ icon: 'success', title: 'ลบหมวดหมู่สำเร็จ!', showConfirmButton: false, timer: 1000 });
-      }
-    });
-  }
-
-  // ปรับการโหลดข้อมูลให้เสถียรเมื่อเปิดใช้งานในมือถือ หรือ รันบน Github แบบ 100%
-  async function loadData() {
-    let data = localStorage.getItem(getStorageKey());
-    currentTasks = data ? JSON.parse(data) : [];
-    renderTasks();
-
-    if(WEB_APP_URL && WEB_APP_URL.startsWith("http") && !isFetching) {
-      isFetching = true;
-      const monthNum = parseInt(document.getElementById('selMonth').value);
-      const monthStr = thaiMonths[monthNum - 1];
-      const year = document.getElementById('selYear').value;
-      const name = document.getElementById('empName').value;
+function doGet(e) {
+  try {
+    // แยกระบบชัดเจน หากเรียกจาก GitHub จะดึงข้อมูล JSON ให้
+    if (e.parameter.action === 'getData') {
+      var monthYear = e.parameter.monthYear;
+      var fullName = e.parameter.fullName;
       
-      try {
-        // เพิ่ม Cache Buster (t=Date.now()) เพื่อบังคับให้โหลดข้อมูลใหม่ล่าสุดเสมอ ไม่ติดข้อมูลเก่า
-        const url = `${WEB_APP_URL}?monthYear=${encodeURIComponent(monthStr + ' ' + year)}&fullName=${encodeURIComponent(name)}&t=${Date.now()}`;
-        const response = await fetch(url, { method: 'GET', redirect: 'follow' }); // รองรับ Redirect จากระบบ Google
-        const json = await response.json();
-        
-        if(json.status === 'success' && json.tasks) { // ถ้าสถานะเป็น Success ให้นำข้อมูลมาแสดงทันที
-          currentTasks = json.tasks;
-          saveData(); 
-          renderTasks();
+      var ss = SpreadsheetApp.openById(SHEET_ID);
+      var dbSheet = ss.getSheetByName("WorkReports");
+      if (!dbSheet) return sendResponse({ status: 'success', tasks: [] });
+      
+      var values = dbSheet.getDataRange().getValues();
+      var tasks = [];
+      for (var i = 1; i < values.length; i++) {
+        if (values[i][1] === monthYear && values[i][2] === fullName) {
+          var jsonStr = values[i][5];
+          if(jsonStr) { try { tasks = JSON.parse(jsonStr); } catch(err) {} }
+          break;
         }
-      } catch(e) {
-        console.log("Load from sheet error (might be offline or CORS):", e);
       }
-      isFetching = false;
+      return sendResponse({ status: 'success', tasks: tasks });
     }
-  }
-
-  // ปรับการส่งข้อมูลให้เลี่ยงปัญหา CORS บน GitHub แบบ 100%
-  function syncToDatabase() {
-    const monthNum = parseInt(document.getElementById('selMonth').value);
-    const monthStr = thaiMonths[monthNum - 1];
-    const year = document.getElementById('selYear').value;
-    const payload = {
-      monthYear: `${monthStr} ${year}`,
-      fullName: document.getElementById('empName').value,
-      position: document.getElementById('empPosition').value,
-      tasks: currentTasks
-    };
-
-    if (typeof google !== 'undefined' && google.script && google.script.run) {
-      // 1. ทำงานผ่าน Apps Script (ถ้าบังเอิญรันบน Apps Script)
-      google.script.run.saveRecordToDatabase(payload);
-    } else if (WEB_APP_URL && WEB_APP_URL.startsWith("http")) {
-      // 2. ทำงานผ่าน GitHub Pages (เพิ่ม mode: 'no-cors' เพื่อไม่ให้เบราว์เซอร์บล็อกการส่งข้อมูลข้าม Domain)
-      try {
-        fetch(WEB_APP_URL, {
-          method: 'POST',
-          mode: 'no-cors', 
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload)
-        }).catch(e => console.log("Sync POST error:", e));
-      } catch(e) {
-        console.log("Sync error:", e);
-      }
-    }
-  }
-
-  function addTask() {
-    let cat = document.getElementById('taskCategory').value;
-    if(cat === "NEW") {
-      let rawCatName = document.getElementById('newCategoryInput').value.trim();
-      if(!rawCatName) return Swal.fire('แจ้งเตือน', 'กรุณาระบุชื่อหมวดหมู่ใหม่', 'warning');
-      
-      let savedCats = JSON.parse(localStorage.getItem('customCategories')) || [];
-      let totalCats = defaultCategories.length + savedCats.length;
-      let nextNum = totalCats + 1;
-      
-      cat = `${nextNum}. ${rawCatName}`;
-      
-      if(!savedCats.includes(cat) && !defaultCategories.includes(cat)) {
-        savedCats.push(cat);
-        localStorage.setItem('customCategories', JSON.stringify(savedCats));
-      }
-      loadCategories(); 
-      document.getElementById('taskCategory').value = cat;
-      checkNewCategory(); 
-      document.getElementById('newCategoryDiv').classList.add('d-none');
-      document.getElementById('newCategoryInput').value = "";
-    }
-
-    let detail = document.getElementById('taskDetail').value.trim();
-    if(!detail) return Swal.fire('แจ้งเตือน', 'กรุณาระบุรายละเอียดงาน', 'warning');
-
-    let newTask = { id: Date.now(), category: cat, detail: detail };
-    currentTasks.push(newTask);
-    saveData();
-    syncToDatabase(); 
     
-    document.getElementById('taskDetail').value = "";
-    renderTasks();
+    // หากเข้าหน้าเว็บผ่าน URL ของ Apps Script ตรงๆ จะแสดงหน้าแอปให้
+    return HtmlService.createHtmlOutputFromFile('Index')
+      .setTitle('🌸 Smart Work Report')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  } catch (error) {
+    return sendResponse({ status: 'error', message: error.message });
   }
+}
 
-  function deleteTask(id) {
-    Swal.fire({
-      title: 'ลบรายการนี้?',
-      text: "คุณแน่ใจไหมว่าต้องการลบรายการนี้?",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#ff8787',
-      cancelButtonColor: '#adb5bd',
-      confirmButtonText: 'ลบเลย!',
-      cancelButtonText: 'ยกเลิก'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        currentTasks = currentTasks.filter(t => t.id !== id);
-        saveData();
-        syncToDatabase(); 
-        renderTasks();
-      }
-    });
-  }
-  
-  async function editTask(id) {
-    const task = currentTasks.find(t => t.id === id);
-    if(!task) return;
-
-    const { value: newDetail } = await Swal.fire({
-      title: '✏️ แก้ไขผลงาน',
-      input: 'textarea',
-      inputValue: task.detail,
-      inputPlaceholder: 'ระบุรายละเอียดงานที่ทำ...',
-      showCancelButton: true,
-      confirmButtonColor: '#748ffc',
-      cancelButtonColor: '#adb5bd',
-      confirmButtonText: 'บันทึก',
-      cancelButtonText: 'ยกเลิก',
-      inputValidator: (value) => {
-        if (!value.trim()) return 'กรุณาระบุรายละเอียดงาน!'
-      }
-    });
-
-    if (newDetail) {
-      task.detail = newDetail.trim();
-      saveData();
-      syncToDatabase(); 
-      renderTasks();
-      Swal.fire({ icon: 'success', title: 'อัปเดตแล้ว!', showConfirmButton: false, timer: 1000 });
-    }
-  }
-
-  function moveTask(id, direction) {
-    const index = currentTasks.findIndex(t => t.id === id);
-    if (index < 0) return;
-    
-    const cat = currentTasks[index].category;
-    let targetIndex = -1;
-    
-    if (direction === 'up') {
-       for(let i = index - 1; i >= 0; i--) {
-          if(currentTasks[i].category === cat) { targetIndex = i; break; }
-       }
+function doPost(e) {
+  try {
+    var data;
+    // เลี่ยง CORS Block โดยการรับข้อมูลแบบ URL Encoded
+    if (e.parameter.data) {
+      data = JSON.parse(e.parameter.data);
+    } else if (e.postData && e.postData.contents) {
+      data = JSON.parse(e.postData.contents);
     } else {
-       for(let i = index + 1; i < currentTasks.length; i++) {
-          if(currentTasks[i].category === cat) { targetIndex = i; break; }
-       }
+      return sendResponse({ status: 'error', message: 'No data' });
     }
     
-    if (targetIndex !== -1) {
-       let temp = currentTasks[index];
-       currentTasks[index] = currentTasks[targetIndex];
-       currentTasks[targetIndex] = temp;
-       saveData();
-       syncToDatabase(); 
-       renderTasks();
-    }
-  }
-
-  function saveData() { localStorage.setItem(getStorageKey(), JSON.stringify(currentTasks)); }
-
-  function renderTasks() {
-    const container = document.getElementById('taskListContainer');
-    container.innerHTML = "";
-
-    if(currentTasks.length === 0) {
-      container.innerHTML = "<div class='text-muted text-center py-5 bg-white rounded-3 border' style='border-style: dashed !important;'><br>☁️ ยังไม่มีผลงานในเดือนนี้ <br>มาเริ่มต้นบันทึกกันเถอะ!<br><br></div>";
-      return;
-    }
-
-    let grouped = {};
-    currentTasks.forEach(t => {
-      if(!grouped[t.category]) grouped[t.category] = [];
-      grouped[t.category].push(t);
-    });
-
-    for (const [cat, tasks] of Object.entries(grouped)) {
-      let catDiv = document.createElement('div');
-      catDiv.innerHTML = `<h6 class="mt-4 fw-bold text-primary border-bottom pb-2" style="color: #5c7cfa !important;">${cat}</h6>`;
-      
-      tasks.forEach(t => {
-        catDiv.innerHTML += `
-          <div class="task-item d-flex justify-content-between align-items-center">
-            <div style="white-space: pre-wrap; flex-grow: 1;">${t.detail}</div>
-            <div class="btn-group ms-3 bg-white rounded shadow-sm">
-              <button class="btn btn-sm btn-light border-0" onclick="editTask(${t.id})" title="แก้ไข">✏️</button>
-              <button class="btn btn-sm btn-light border-0" onclick="moveTask(${t.id}, 'up')" title="เลื่อนขึ้น">🔼</button>
-              <button class="btn btn-sm btn-light border-0" onclick="moveTask(${t.id}, 'down')" title="เลื่อนลง">🔽</button>
-              <button class="btn btn-sm btn-light border-0 text-danger" onclick="deleteTask(${t.id})" title="ลบ">🗑️</button>
-            </div>
-          </div>
-        `;
-      });
-      container.appendChild(catDiv);
-    }
-  }
-
-  function toThaiNum(numStr) {
-    const thaiNums = ['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙'];
-    return numStr.toString().replace(/\d/g, d => thaiNums[d]);
-  }
-
-  function generateWord() {
-    const docx = window.docx;
-
-    function createRun(text, isBold = false, isUnderline = false) {
-      let options = {
-        text: text,
-        font: "TH SarabunIT๙",
-        size: 32, // 16 pt
-        bold: isBold,
-        noProof: true 
-      };
-      if (isUnderline) { options.underline = {}; }
-      return new docx.TextRun(options);
-    }
-
-    const monthNum = parseInt(document.getElementById('selMonth').value);
-    const monthStr = thaiMonths[monthNum - 1];
-    let yearBE = parseInt(document.getElementById('selYear').value);
-    const name = document.getElementById('empName').value;
-    const position = document.getElementById('empPosition').value;
-    const type = document.getElementById('empType').value;
-
-    let fiscalYearBE = yearBE;
-    if (monthNum >= 10) {
-      fiscalYearBE = yearBE + 1;
-    }
-
-    const isKharachakan = type === "ข้าราชการ";
-    const box1 = isKharachakan ? "☑ ข้าราชการ" : "☐ ข้าราชการ";
-    const box2 = !isKharachakan ? "☑ พนักงานราชการ" : "☐ พนักงานราชการ";
-
-    const bNone = { style: docx.BorderStyle.NONE, size: 0, color: "auto" };
-    const bSingle = { style: docx.BorderStyle.SINGLE, size: 1, color: "000000" };
+    var ss = SpreadsheetApp.openById(SHEET_ID);
+    var dbSheet = ss.getSheetByName("WorkReports");
     
-    const tableBorders = {
-        top: bSingle, bottom: bSingle, left: bSingle, right: bSingle,
-        insideVertical: bSingle,
-        insideHorizontal: bNone 
-    };
-
-    const headerCellBorders = { bottom: bSingle };
-    const footerCellBorders = { top: bSingle, bottom: bSingle };
-
-    let grouped = {};
-    let allCats = Array.from(document.getElementById('taskCategory').options).map(o => o.value).filter(v => v !== "NEW");
-    allCats.forEach(c => grouped[c] = []); 
-    currentTasks.forEach(t => {
-      if(grouped[t.category]) grouped[t.category].push(t);
-      else grouped[t.category] = [t]; 
-    });
-
-    let tableRows = [
-      new docx.TableRow({
-        children: [
-          new docx.TableCell({ borders: headerCellBorders, children: [new docx.Paragraph({ alignment: docx.AlignmentType.CENTER, children: [createRun("งานในหน้าที่ประจำที่ปฏิบัติจริงในช่วงเดือนนี้", true)] })] }),
-          new docx.TableCell({ borders: headerCellBorders, children: [new docx.Paragraph({ alignment: docx.AlignmentType.CENTER, children: [createRun("ผลการปฏิบัติงาน/ผลความคืบหน้าของงาน\n(ขั้นตอนการดำเนินงาน)", true)] })] })
-        ]
-      })
-    ];
-
-    for (const [cat, tasks] of Object.entries(grouped)) {
-      if(tasks.length === 0) continue; 
-
-      let taskRuns = [];
-      tasks.forEach((t) => {
-        let textParts = t.detail.split(/\r?\n/);
-        textParts.forEach((part) => {
-           let cleanPart = part.replace(/^[-•–\s]+/, '').trim();
-           if(cleanPart) {
-             let thaiPart = toThaiNum("-" + "\u00A0" + cleanPart);
-             taskRuns.push(new docx.Paragraph({ children: [createRun(thaiPart, false)] }));
-           }
-        });
-      });
-
-      tableRows.push(new docx.TableRow({
-        children: [
-          new docx.TableCell({ children: [new docx.Paragraph({ children: [createRun(toThaiNum(cat), true)] })] }),
-          new docx.TableCell({ children: taskRuns })
-        ]
-      }));
+    if (!dbSheet) {
+      dbSheet = ss.insertSheet("WorkReports");
+      dbSheet.appendRow(["Timestamp", "เดือน/ปี", "ชื่อ-สกุล", "ตำแหน่ง", "ข้อมูลอ่านง่าย (ให้อ่าน)", "ข้อมูลระบบ (JSON)"]);
+      dbSheet.getRange("A1:F1").setFontWeight("bold").setBackground("#d9ead3");
     }
-
-    tableRows.push(new docx.TableRow({
-      children: [
-        new docx.TableCell({ borders: footerCellBorders, children: [new docx.Paragraph({ children: [createRun("ปัญหา/อุปสรรคที่เกิดขึ้นในงานที่ปฏิบัติจริงในช่วงเดือนนี้", true)] })] }),
-        new docx.TableCell({ borders: footerCellBorders, children: [new docx.Paragraph({ children: [createRun("-", false)] })] })
-      ]
-    }));
-    tableRows.push(new docx.TableRow({
-      children: [
-        new docx.TableCell({ borders: footerCellBorders, children: [new docx.Paragraph({ children: [createRun("ข้อคิดเห็น/ข้อเสนอแนะจาก หัวหน้ากลุ่มงาน หรือหัวหน้างาน ที่ช่วยแก้ปัญหา/ทำให้งานดำเนินการต่อได้", true)] })] }),
-        new docx.TableCell({ borders: footerCellBorders, children: [new docx.Paragraph({ children: [createRun("-", false)] })] })
-      ]
-    }));
-
-    const doc = new docx.Document({
-      sections: [{
-        properties: {
-          page: {
-            margin: {
-              top: 1440,
-              bottom: 1440,
-              left: 850,
-              right: 850,
-            }
-          }
-        },
-        children: [
-          new docx.Paragraph({ alignment: docx.AlignmentType.CENTER, children: [createRun(`แบบรายงานผลการปฏิบัติงานประจำเดือน ${monthStr} ${toThaiNum(yearBE)}`, true)] }),
-          new docx.Paragraph({ alignment: docx.AlignmentType.CENTER, children: [createRun(`ของบุคลากร กลุ่มสื่อสารองค์กร สลก. ประจำปีงบประมาณ พ.ศ. ${toThaiNum(fiscalYearBE)}`, true)] }),
-          new docx.Paragraph({ alignment: docx.AlignmentType.CENTER, children: [createRun(`ชื่อ ${name} ตำแหน่ง ${position}`, true)] }),
-          
-          new docx.Paragraph({ alignment: docx.AlignmentType.CENTER, spacing: { before: 200, after: 200 }, children: [createRun(`${box1}       ${box2}`, false)] }),
-
-          new docx.Table({
-            width: { size: 100, type: docx.WidthType.PERCENTAGE },
-            columnWidths: [4500, 6500],
-            borders: tableBorders,
-            rows: tableRows
-          }),
-
-          new docx.Paragraph({ spacing: { before: 400 }, children: [createRun("สรุปวันปฏิบัติงาน และวันลา", true, true), createRun(" (ในรอบเดือนนี้)", false)] }),
-          new docx.Paragraph({ children: [createRun("ไปราชการนอกสถานที่/อบรม ........ วัน   ลาป่วย ........ วัน   ลาพักผ่อน  จำนวน ........ วัน", false)] }),
-          
-          new docx.Paragraph({ text: "" }),
-          new docx.Paragraph({ text: "" }),
-
-          new docx.Table({
-            width: { size: 100, type: docx.WidthType.PERCENTAGE },
-            borders: { top: bNone, bottom: bNone, left: bNone, right: bNone, insideHorizontal: bNone, insideVertical: bNone },
-            rows: [
-              new docx.TableRow({
-                children: [
-                  new docx.TableCell({ width: { size: 55, type: docx.WidthType.PERCENTAGE }, children: [] }), 
-                  new docx.TableCell({ width: { size: 15, type: docx.WidthType.PERCENTAGE }, children: [new docx.Paragraph({ spacing: { after: 120 }, children: [createRun("ลงชื่อ", true)] })] }),
-                  new docx.TableCell({ width: { size: 30, type: docx.WidthType.PERCENTAGE }, children: [new docx.Paragraph({ spacing: { after: 120 }, children: [createRun("ผู้รายงานผล", true)] })] })
-                ]
-              }),
-              new docx.TableRow({
-                children: [
-                  new docx.TableCell({ width: { size: 55, type: docx.WidthType.PERCENTAGE }, children: [] }), 
-                  new docx.TableCell({ width: { size: 15, type: docx.WidthType.PERCENTAGE }, children: [new docx.Paragraph({ spacing: { after: 120 }, children: [createRun("ลงชื่อ", true)] })] }),
-                  new docx.TableCell({ width: { size: 30, type: docx.WidthType.PERCENTAGE }, children: [new docx.Paragraph({ spacing: { after: 120 }, children: [createRun("ผู้ตรวจสอบ", true)] })] })
-                ]
-              }),
-              new docx.TableRow({
-                children: [
-                  new docx.TableCell({ width: { size: 55, type: docx.WidthType.PERCENTAGE }, children: [] }),
-                  new docx.TableCell({ width: { size: 15, type: docx.WidthType.PERCENTAGE }, children: [new docx.Paragraph({ spacing: { after: 0 }, children: [createRun("ลงชื่อ", true)] })] }),
-                  new docx.TableCell({ width: { size: 30, type: docx.WidthType.PERCENTAGE }, children: [new docx.Paragraph({ spacing: { after: 0 }, children: [createRun("หัวหน้ากลุ่มสื่อสารองค์กร", true)] })] })
-                ]
-              })
-            ]
-          })
-        ]
-      }]
-    });
-
-    docx.Packer.toBlob(doc).then(blob => {
-      saveAs(blob, `รายงานผลการปฏิบัติงาน_${name}_${monthStr}.docx`);
-    });
+    
+    var values = dbSheet.getDataRange().getValues();
+    var isUpdated = false;
+    var prettyTasks = data.tasks.map(function(t) { return t.category + ": \n" + t.detail; }).join("\n\n");
+    var rawJson = JSON.stringify(data.tasks);
+    
+    for (var i = 1; i < values.length; i++) {
+      if (values[i][1] === data.monthYear && values[i][2] === data.fullName) {
+        dbSheet.getRange(i + 1, 1).setValue(new Date());
+        dbSheet.getRange(i + 1, 4).setValue(data.position);
+        dbSheet.getRange(i + 1, 5).setValue(prettyTasks);
+        dbSheet.getRange(i + 1, 6).setValue(rawJson); 
+        isUpdated = true;
+        break;
+      }
+    }
+    
+    if (!isUpdated) {
+      dbSheet.appendRow([new Date(), data.monthYear, data.fullName, data.position, prettyTasks, rawJson]);
+    }
+    
+    return sendResponse({ status: 'success' });
+  } catch (error) {
+    return sendResponse({ status: 'error', message: error.message });
   }
-</script>
-
-</body>
-</html>
+}
