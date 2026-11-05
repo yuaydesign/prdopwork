@@ -284,14 +284,12 @@
     });
   }
 
-  // ปรับการโหลดข้อมูลให้เสถียรเมื่อเปิดใช้งานในมือถือ หรือ รันบน Github
+  // ปรับการโหลดข้อมูลให้เสถียรเมื่อเปิดใช้งานในมือถือ หรือ รันบน Github แบบ 100%
   async function loadData() {
-    // 1. โหลดข้อมูลในเครื่องมาโชว์ไปก่อน (เพื่อให้ไว)
     let data = localStorage.getItem(getStorageKey());
     currentTasks = data ? JSON.parse(data) : [];
     renderTasks();
 
-    // 2. ซิงค์กับ Google Sheet เบื้องหลัง (ดึงข้อมูลล่าสุด)
     if(WEB_APP_URL && WEB_APP_URL.startsWith("http") && !isFetching) {
       isFetching = true;
       const monthNum = parseInt(document.getElementById('selMonth').value);
@@ -300,24 +298,24 @@
       const name = document.getElementById('empName').value;
       
       try {
-        const url = `${WEB_APP_URL}?monthYear=${encodeURIComponent(monthStr + ' ' + year)}&fullName=${encodeURIComponent(name)}`;
-        const response = await fetch(url);
+        // เพิ่ม Cache Buster (t=Date.now()) เพื่อบังคับให้โหลดข้อมูลใหม่ล่าสุดเสมอ ไม่ติดข้อมูลเก่า
+        const url = `${WEB_APP_URL}?monthYear=${encodeURIComponent(monthStr + ' ' + year)}&fullName=${encodeURIComponent(name)}&t=${Date.now()}`;
+        const response = await fetch(url, { method: 'GET', redirect: 'follow' }); // รองรับ Redirect จากระบบ Google
         const json = await response.json();
         
-        // ถ้าระบบหลังบ้านส่งข้อมูลมาและมีรายการงาน ให้ทับข้อมูล Local
-        if(json.status === 'success' && json.tasks && json.tasks.length > 0) {
+        if(json.status === 'success' && json.tasks) { // ถ้าสถานะเป็น Success ให้นำข้อมูลมาแสดงทันที
           currentTasks = json.tasks;
           saveData(); 
           renderTasks();
         }
       } catch(e) {
-        console.log("Load from sheet error (might be offline):", e);
+        console.log("Load from sheet error (might be offline or CORS):", e);
       }
       isFetching = false;
     }
   }
 
-  // ปรับการส่งข้อมูลให้เลี่ยงปัญหา CORS บน GitHub
+  // ปรับการส่งข้อมูลให้เลี่ยงปัญหา CORS บน GitHub แบบ 100%
   function syncToDatabase() {
     const monthNum = parseInt(document.getElementById('selMonth').value);
     const monthStr = thaiMonths[monthNum - 1];
@@ -329,14 +327,15 @@
       tasks: currentTasks
     };
 
-    if (typeof google !== 'undefined' && google.script) {
-      // 1. ทำงานผ่าน Apps Script 
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      // 1. ทำงานผ่าน Apps Script (ถ้าบังเอิญรันบน Apps Script)
       google.script.run.saveRecordToDatabase(payload);
     } else if (WEB_APP_URL && WEB_APP_URL.startsWith("http")) {
-      // 2. ทำงานผ่าน GitHub Pages (ต้องส่ง Headers เป็น text/plain เลี่ยงปัญหา CORS Block)
+      // 2. ทำงานผ่าน GitHub Pages (เพิ่ม mode: 'no-cors' เพื่อไม่ให้เบราว์เซอร์บล็อกการส่งข้อมูลข้าม Domain)
       try {
         fetch(WEB_APP_URL, {
           method: 'POST',
+          mode: 'no-cors', 
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(payload)
         }).catch(e => console.log("Sync POST error:", e));
