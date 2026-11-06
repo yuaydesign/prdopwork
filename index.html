@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🌸 Smart Work Report</title>
@@ -47,14 +46,6 @@
       background-color: #fff;
     }
     .task-list { max-height: 500px; overflow-y: auto; padding-right: 5px; }
-    .task-detail { white-space: pre-wrap; overflow-wrap: anywhere; flex: 1; min-width: 0; }
-    @media (max-width: 600px) {
-      body { padding: 12px 0; }
-      .main-container { padding: 20px 14px; }
-      .section-box { padding: 16px 10px; }
-      .task-item { flex-direction: column; align-items: stretch !important; }
-      .task-item .btn-group { align-self: flex-end; }
-    }
     .task-item { 
       border-left: 6px solid #ffb3c6; 
       background: #fff0f3; 
@@ -91,7 +82,6 @@
       border: 1px dashed #bac8ff;
     }
     
-    /* Footer Styling */
     .app-footer {
       color: #3b5bdb;
       font-size: 0.95rem;
@@ -105,16 +95,7 @@
 
 <div class="container main-container">
   <h3 class="text-center header-title mb-4">✨ ระบบบันทึกผลการปฏิบัติงานประจำเดือน ✨</h3>
-  <div id="syncPanel" class="alert alert-info mb-4">
-    <div id="syncStatus" role="status" aria-live="polite">กำลังเปิดรายงาน…</div>
-    <div class="d-flex flex-wrap gap-2 mt-2">
-      <button id="retryButton" type="button" class="btn btn-sm btn-outline-primary" onclick="retrySync()" hidden>ลองอีกครั้ง</button>
-      <button id="backupButton" type="button" class="btn btn-sm btn-outline-secondary" onclick="downloadDraft()" hidden>ดาวน์โหลดฉบับร่าง JSON</button>
-      <button id="discardButton" type="button" class="btn btn-sm btn-outline-danger" onclick="discardDraft()" hidden>โหลดข้อมูลจากชีตใหม่</button>
-    </div>
-  </div>
   
-  <!-- ส่วนข้อมูลบุคคล -->
   <div class="row g-3 mb-4 pb-4" style="border-bottom: 2px dashed #dbe4ff;">
     <div class="col-md-3">
       <label class="form-label text-primary fw-bold">🗓️ เดือน</label>
@@ -126,56 +107,51 @@
     </div>
     <div class="col-md-6">
       <label class="form-label fw-bold">👤 ชื่อ-สกุล</label>
-      <input type="text" id="empName" class="form-control" placeholder="ระบุชื่อ-สกุล" value="นายวรรัตน์ จันทร์เจริญ" onchange="loadData(); saveProfile();" maxlength="200">
+      <input type="text" id="empName" class="form-control" placeholder="ระบุชื่อ-สกุล" value="นายวรรัตน์ จันทร์เจริญ" onchange="loadData(); saveProfile();">
     </div>
     <div class="col-md-6">
       <label class="form-label fw-bold">💼 ตำแหน่ง</label>
-      <input type="text" id="empPosition" class="form-control" placeholder="ระบุตำแหน่ง" value="นักวิชาการเผยแพร่ปฏิบัติการ" onchange="profileChanged()" maxlength="300" disabled>
+      <input type="text" id="empPosition" class="form-control" placeholder="ระบุตำแหน่ง" value="นักวิชาการเผยแพร่ปฏิบัติการ" onchange="saveProfile()">
     </div>
     <div class="col-md-6">
       <label class="form-label fw-bold">🏢 ประเภทบุคลากร</label>
-      <select id="empType" class="form-select" onchange="profileChanged()" disabled>
+      <select id="empType" class="form-select" onchange="saveProfile()">
         <option value="ข้าราชการ">ข้าราชการ</option>
         <option value="พนักงานราชการ">พนักงานราชการ</option>
       </select>
     </div>
   </div>
 
-  <!-- ส่วนบันทึกงาน -->
   <div class="row g-3 mb-4 section-box">
     <h5 class="text-primary fw-bold mb-2">📝 บันทึกรายการปฏิบัติงาน</h5>
     <div class="col-md-12">
       <label class="form-label fw-semibold">📌 ประเภทงาน</label>
       <div class="d-flex gap-2">
-        <select id="taskCategory" class="form-select" onchange="checkNewCategory()" data-edit disabled></select>
-        <button type="button" id="btnDeleteCategory" class="btn btn-outline-danger d-none" onclick="deleteCustomCategory()" title="ลบหมวดหมู่นี้" data-edit disabled>🗑️</button>
+        <select id="taskCategory" class="form-select" onchange="checkNewCategory()"></select>
+        <button type="button" id="btnDeleteCategory" class="btn btn-outline-danger d-none" onclick="deleteCustomCategory()" title="ลบหมวดหมู่นี้">🗑️</button>
       </div>
     </div>
     <div class="col-md-12 d-none" id="newCategoryDiv">
-      <input type="text" id="newCategoryInput" class="form-control" placeholder="พิมพ์ชื่อประเภทงานใหม่ที่นี่..." maxlength="490" data-edit disabled>
+      <input type="text" id="newCategoryInput" class="form-control" placeholder="พิมพ์ชื่อประเภทงานใหม่ที่นี่...">
     </div>
     <div class="col-md-12">
       <label class="form-label fw-semibold">📝 รายละเอียดงาน / ผลความคืบหน้า</label>
-      <textarea id="taskDetail" class="form-control" rows="3" placeholder="ระบุรายละเอียดงานที่ทำ... (Enter เพิ่มงาน, Shift+Enter ขึ้นบรรทัดใหม่)" maxlength="10000" data-edit disabled></textarea>
+      <textarea id="taskDetail" class="form-control" rows="3" placeholder="ระบุรายละเอียดงานที่ทำ... (กด Enter เพื่อเพิ่มงาน)"></textarea>
     </div>
     <div class="col-md-12 text-end mt-3">
-      <button id="addTaskButton" type="button" class="btn btn-primary px-4" onclick="addTask()" data-edit disabled>+ เพิ่มผลงาน</button>
+      <button class="btn btn-primary px-4" onclick="addTask()">+ เพิ่มผลงาน</button>
     </div>
   </div>
 
-  <!-- ส่วนแสดงผล -->
-  <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center mb-3 mt-5">
+  <div class="d-flex justify-content-between align-items-center mb-3 mt-5">
     <h5 class="mb-0 fw-bold" style="color: #4a4a4a;">📁 ผลงานในเดือนนี้</h5>
     <button class="btn btn-export px-4" onclick="generateWord()">📥 โหลดไฟล์ Word</button>
   </div>
   
   <div id="taskListContainer" class="task-list mt-3">
-    <!-- รายการงานจะแสดงที่นี่ -->
   </div>
-
 </div>
 
-<!-- Footer Credits -->
 <div class="container text-center app-footer mt-3">
   <p class="mb-1 fw-bold fs-6">© 2026 ระบบบันทึกผลการปฏิบัติงานประจำเดือน</p>
   <p class="mb-0 opacity-75" style="font-size: 0.9rem;">พัฒนาโดย นายวรรัตน์ จันทร์เจริญ | นักวิชาการเผยแพร่ปฏิบัติการ | กลุ่มสื่อสารองค์กร สลก.</p>
@@ -183,381 +159,367 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  // APP_CONTROLLER_START
-  // Source for the controller embedded in apps-script/Index.html. Run node scripts/build.cjs after edits.
-  const thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
-  const defaultCategories = [
-    '1. เขียนข่าว / ถ่ายภาพ / ถ่ายภาพเคลื่อนไหว เผยแพร่ประชาสัมพันธ์ ผ่านช่องทางออนไลน์ ของกรมคุมประพฤติ',
-    '2. ออกแบบ Infographic (ภารกิจตามนโยบาย / ข้อสั่งการ)',
-    '3. VDO Presentation / VDO Footage',
-    '4. งานอื่น ๆ ที่ได้รับมอบหมาย'
+  // ==========================================
+  // [สำคัญ!] ให้นำ URL ที่ได้จากการ Deploy ครั้งล่าสุดมาวางที่นี่
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwua4fdPdNfL64OLHE1j3CWWA3R0slbN6c-MNHnNvlMhiAhUpN8aMOXOqieOurpUoT7/exec"; 
+  // ==========================================
+
+  const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+  let defaultCategories = [
+    "1. เขียนข่าว / ถ่ายภาพ / ถ่ายภาพเคลื่อนไหว เผยแพร่ประชาสัมพันธ์ ผ่านช่องทางออนไลน์ ของกรมคุมประพฤติ",
+    "2. ออกแบบ Infographic (ภารกิจตามนโยบาย / ข้อสั่งการ)",
+    "3. VDO Presentation / VDO Footage",
+    "4. งานอื่น ๆ ที่ได้รับมอบหมาย"
   ];
   let currentTasks = [];
-  let activeRecord = null;
-  let revision = '0';
   let isFetching = false;
-  let isSaving = false;
-  let isReady = false;
-  let dirty = false;
-  let conflict = false;
-  let loadError = false;
-  let loadToken = 0;
-  let storageUnavailable = false;
-  const memoryStorage = new Map();
-  const el = id => document.getElementById(id);
-
-  function readLocal(key, fallback = null) {
-    let raw;
-    try { raw = memoryStorage.has(key) ? memoryStorage.get(key) : localStorage.getItem(key); }
-    catch (_) { storageUnavailable = true; raw = memoryStorage.get(key); }
-    if (!raw) return fallback;
-    try { return JSON.parse(raw); } catch (_) { return fallback; }
-  }
-  function writeLocal(key, value) {
-    const raw = JSON.stringify(value);
-    try { localStorage.setItem(key, raw); memoryStorage.delete(key); }
-    catch (_) { storageUnavailable = true; memoryStorage.set(key, raw); }
-  }
-  function selectedRecord() {
-    const month = Number(el('selMonth').value);
-    const year = el('selYear').value;
-    const fullName = el('empName').value.trim();
-    return { month, year, fullName, monthYear: `${thaiMonths[month - 1]} ${year}`,
-      key: `work_report_v2_${encodeURIComponent(fullName)}_${year}_${month}` };
-  }
-  function validTasks(tasks) {
-    return Array.isArray(tasks) && tasks.every(t => t &&
-      (typeof t.id === 'string' || typeof t.id === 'number') &&
-      typeof t.category === 'string' && typeof t.detail === 'string');
-  }
-  function cacheRecord() {
-    if (!activeRecord) return;
-    writeLocal(activeRecord.key, { tasks: currentTasks, revision, dirty,
-      position: el('empPosition').value.trim(), employeeType: el('empType').value });
-  }
-  function saveProfile() {
-    writeLocal('work_report_profile_v2', { fullName: el('empName').value.trim(),
-      position: el('empPosition').value, employeeType: el('empType').value });
-  }
-  function loadProfile() {
-    const profile = readLocal('work_report_profile_v2');
-    if (!profile || typeof profile !== 'object') return;
-    if (typeof profile.fullName === 'string') el('empName').value = profile.fullName;
-    if (typeof profile.position === 'string') el('empPosition').value = profile.position;
-    if (['ข้าราชการ','พนักงานราชการ'].includes(profile.employeeType)) el('empType').value = profile.employeeType;
-  }
-  function initSelects() {
-    const date = new Date();
-    const parts = new Intl.DateTimeFormat('en-US', {timeZone:'Asia/Bangkok', year:'numeric', month:'numeric'}).formatToParts(date);
-    const year = Number(parts.find(p => p.type === 'year').value) + 543;
-    thaiMonths.forEach((month, i) => el('selMonth').options.add(new Option(month, i + 1)));
-    el('selMonth').value = parts.find(p => p.type === 'month').value;
-    for (let y = Math.min(2569, year - 5); y <= year + 10; y++) el('selYear').options.add(new Option(y, y));
-    el('selYear').value = year;
-  }
-  function customCategories() {
-    const cats = readLocal('customCategories', []);
-    return Array.isArray(cats) ? cats.filter(c => typeof c === 'string') : [];
-  }
-  function loadCategories() {
-    const select = el('taskCategory');
-    const previous = select.value;
-    select.replaceChildren();
-    [...new Set([...defaultCategories, ...customCategories(), ...currentTasks.map(t => t.category)])]
-      .forEach(c => select.options.add(new Option(c, c)));
-    select.options.add(new Option('✨ + เพิ่มหมวดหมู่ใหม่...', 'NEW'));
-    if ([...select.options].some(o => o.value === previous)) select.value = previous;
-    checkNewCategory();
-  }
-  function checkNewCategory() {
-    const value = el('taskCategory').value;
-    el('newCategoryDiv').classList.toggle('d-none', value !== 'NEW');
-    el('btnDeleteCategory').classList.toggle('d-none', !customCategories().includes(value));
-  }
-  async function deleteCustomCategory() {
-    if (!canEdit()) return;
-    const value = el('taskCategory').value;
-    const token = loadToken;
-    const answer = await Swal.fire({title:'ลบหมวดหมู่นี้?', text:value, icon:'warning', showCancelButton:true, confirmButtonText:'ลบ', cancelButtonText:'ยกเลิก'});
-    if (!answer.isConfirmed || token !== loadToken || !canEdit()) return;
-    writeLocal('customCategories', customCategories().filter(c => c !== value));
+  
+  window.onload = function() {
+    initSelects();
+    loadProfile();
     loadCategories();
-  }
-  function canEdit() {
-    return (isReady || dirty) && !isFetching && !isSaving && !conflict && activeRecord && activeRecord.key === selectedRecord().key;
-  }
-  function updateControls() {
-    const disabled = !canEdit();
-    document.querySelectorAll('[data-edit]').forEach(node => { node.disabled = disabled; });
-    ['selMonth','selYear','empName'].forEach(id => { el(id).disabled = dirty || isSaving; });
-    ['empPosition','empType'].forEach(id => { el(id).disabled = disabled; });
-    el('retryButton').hidden = !(loadError || dirty);
-    el('retryButton').disabled = isSaving || isFetching || conflict;
-    el('retryButton').textContent = dirty ? 'ลองบันทึกอีกครั้ง' : 'ลองโหลดอีกครั้ง';
-    el('discardButton').hidden = !dirty;
-    el('discardButton').disabled = isSaving || isFetching;
-    el('backupButton').hidden = !dirty;
-  }
-  function setStatus(message, kind = 'info') {
-    el('syncStatus').textContent = message;
-    el('syncPanel').className = `alert alert-${kind} mb-4`;
-    updateControls();
-  }
-  function rpc(method, ...args) {
-    return new Promise((resolve, reject) => {
-      if (typeof google === 'undefined' || !google.script || !google.script.run) {
-        reject(new Error('กรุณาเปิดผ่าน URL ของ Apps Script หรือหน้า GitHub Pages ที่ตั้งค่าแล้ว'));
-        return;
+    loadData();
+
+    document.getElementById('taskDetail').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault(); 
+        addTask();
       }
-      // Do not time out writes locally: an unanswered write may still complete on the server.
-      google.script.run.withSuccessHandler(resolve).withFailureHandler(error => reject(new Error(error.message || String(error))))[method](...args);
+    });
+  };
+
+  function initSelects() {
+    const d = new Date();
+    const selMonth = document.getElementById('selMonth');
+    thaiMonths.forEach((m, idx) => { selMonth.options.add(new Option(m, idx + 1)); });
+    selMonth.value = d.getMonth() + 1; 
+
+    const selYear = document.getElementById('selYear');
+    for(let i = 2569; i <= 2579; i++) {
+      selYear.options.add(new Option(i, i));
+    }
+    let currentBE = d.getFullYear() + 543;
+    if(currentBE < 2569) currentBE = 2569;
+    if(currentBE > 2579) currentBE = 2579;
+    selYear.value = currentBE;
+  }
+
+  function getStorageKey() {
+    const m = document.getElementById('selMonth').value;
+    const y = document.getElementById('selYear').value;
+    return `work_report_${y}_${m}`;
+  }
+
+  function saveProfile() {
+    localStorage.setItem('empName', document.getElementById('empName').value);
+    localStorage.setItem('empPosition', document.getElementById('empPosition').value);
+    localStorage.setItem('empType', document.getElementById('empType').value);
+  }
+
+  function loadProfile() {
+    if(localStorage.getItem('empName')) document.getElementById('empName').value = localStorage.getItem('empName');
+    if(localStorage.getItem('empPosition')) document.getElementById('empPosition').value = localStorage.getItem('empPosition');
+    if(localStorage.getItem('empType')) document.getElementById('empType').value = localStorage.getItem('empType');
+  }
+
+  function loadCategories() {
+    let savedCats = JSON.parse(localStorage.getItem('customCategories')) || [];
+    let allCats = [...defaultCategories, ...savedCats];
+    const sel = document.getElementById('taskCategory');
+    sel.innerHTML = "";
+    allCats.forEach(c => { sel.options.add(new Option(c, c)); });
+    sel.options.add(new Option("✨ + เพิ่มหมวดหมู่ใหม่...", "NEW"));
+    checkNewCategory(); 
+  }
+
+  function checkNewCategory() {
+    const val = document.getElementById('taskCategory').value;
+    const newCatDiv = document.getElementById('newCategoryDiv');
+    const btnDelCat = document.getElementById('btnDeleteCategory');
+    let savedCats = JSON.parse(localStorage.getItem('customCategories')) || [];
+
+    if(val === "NEW") {
+      newCatDiv.classList.remove('d-none');
+      document.getElementById('newCategoryInput').focus();
+      btnDelCat.classList.add('d-none');
+    } else {
+      newCatDiv.classList.add('d-none');
+      if (savedCats.includes(val)) {
+        btnDelCat.classList.remove('d-none');
+      } else {
+        btnDelCat.classList.add('d-none');
+      }
+    }
+  }
+
+  function deleteCustomCategory() {
+    const val = document.getElementById('taskCategory').value;
+    Swal.fire({
+      title: 'ลบหมวดหมู่นี้?',
+      text: `คุณต้องการลบหมวดหมู่ "${val}" ใช่หรือไม่?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ff8787',
+      cancelButtonColor: '#adb5bd',
+      confirmButtonText: 'ลบเลย!',
+      cancelButtonText: 'ยกเลิก'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        let savedCats = JSON.parse(localStorage.getItem('customCategories')) || [];
+        savedCats = savedCats.filter(c => c !== val);
+        localStorage.setItem('customCategories', JSON.stringify(savedCats));
+        loadCategories(); 
+        Swal.fire({ icon: 'success', title: 'ลบหมวดหมู่สำเร็จ!', showConfirmButton: false, timer: 1000 });
+      }
     });
   }
+
+  // 💡 โหลดข้อมูล 100% สลับราง (ป้องกันหน้าจอว่างเปล่า)
   async function loadData() {
-    if (dirty || isSaving) return;
-    const token = ++loadToken;
-    const record = selectedRecord();
-    activeRecord = record;
-    isReady = false;
-    isFetching = false;
-    loadError = false;
-    conflict = false;
-    currentTasks = [];
-    revision = '0';
+    // โชว์ข้อมูลจากเครื่องตัวเองให้ผู้ใช้งานเห็นทันที
+    let localData = localStorage.getItem(getStorageKey());
+    currentTasks = localData ? JSON.parse(localData) : [];
     renderTasks();
-    if (!record.fullName) { setStatus('กรุณาระบุชื่อ-สกุลเพื่อเปิดรายงาน', 'warning'); return; }
-    const cached = readLocal(record.key);
-    const draft = cached && cached.dirty === true && validTasks(cached.tasks) && typeof cached.revision === 'string' ? cached : null;
-    if (draft) {
-      currentTasks = draft.tasks;
-      revision = draft.revision;
-      dirty = true;
-      el('empPosition').value = draft.position || '';
-      if (draft.employeeType) el('empType').value = draft.employeeType;
-      renderTasks();
-    }
+
+    if (isFetching) return;
     isFetching = true;
-    setStatus(draft ? 'พบฉบับร่างที่ยังไม่บันทึก กำลังตรวจข้อมูลใน Google Sheets…' : 'กำลังโหลดจาก Google Sheets…');
-    try {
-      const result = await rpc('getRecordFromDatabase', record.monthYear, record.fullName);
-      if (token !== loadToken) return;
-      if (!result || result.status !== 'success' || !validTasks(result.tasks) || typeof result.revision !== 'string') {
-        throw new Error(result && result.message || 'รูปแบบข้อมูลตอบกลับไม่ถูกต้อง');
+
+    const monthNum = parseInt(document.getElementById('selMonth').value);
+    const monthStr = thaiMonths[monthNum - 1];
+    const year = document.getElementById('selYear').value;
+    const name = document.getElementById('empName').value;
+    const monthYearStr = monthStr + ' ' + year;
+
+    // ระบบทำงานสลับราง 1: Apps Script
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run.withSuccessHandler(function(res) {
+        if (res && res.status === 'success') {
+          handleServerData(res.tasks);
+        }
+        isFetching = false;
+      }).withFailureHandler(function(err) {
+        console.error("Apps Script DB Error:", err);
+        isFetching = false;
+      }).getRecordFromDatabase(monthYearStr, name);
+    } 
+    // ระบบทำงานสลับราง 2: GitHub Pages
+    else if (WEB_APP_URL && WEB_APP_URL.startsWith("http")) {
+      try {
+        const url = `${WEB_APP_URL}?action=getData&monthYear=${encodeURIComponent(monthYearStr)}&fullName=${encodeURIComponent(name)}&t=${Date.now()}`;
+        const response = await fetch(url);
+        const text = await response.text();
+        try {
+          const json = JSON.parse(text);
+          if (json && json.status === 'success') {
+            handleServerData(json.tasks);
+          }
+        } catch (parseError) {
+          console.error("API response is not JSON:", text);
+        }
+      } catch(e) {
+        console.error("Fetch API Error:", e);
+      } finally {
+        isFetching = false;
       }
+    } else {
       isFetching = false;
-      isReady = true;
-      if (draft) {
-        const alreadySaved = result.found && JSON.stringify(result.tasks) === JSON.stringify(draft.tasks) &&
-          (result.position || '') === (draft.position || '').trim() && (result.employeeType || '') === (draft.employeeType || '');
-        if (alreadySaved) {
-          revision = result.revision;
-          dirty = false;
-          cacheRecord();
-          setStatus('ตรวจสอบแล้ว ฉบับร่างนี้บันทึกลง Google Sheets สำเร็จแล้ว', 'success');
-        } else {
-          conflict = result.revision !== revision;
-          setStatus(conflict ? 'ฉบับร่างยังไม่บันทึก และข้อมูลในชีตเปลี่ยนแล้ว กรุณาดาวน์โหลดฉบับร่างก่อนโหลดข้อมูลจากชีตใหม่' : 'พบฉบับร่างที่ยังไม่บันทึก แก้ไขต่อหรือกด “ลองบันทึกอีกครั้ง” เพื่อส่งไป Google Sheets', 'warning');
-        }
-      } else {
-        currentTasks = result.tasks;
-        revision = result.revision;
-        if (result.found) {
-          el('empPosition').value = result.position || '';
-          el('empType').value = result.employeeType || 'ข้าราชการ';
-        }
-        cacheRecord();
-        saveProfile();
-        setStatus(result.recoveredLegacy ? 'โหลดรายการเดิมแล้ว การแก้ไขครั้งถัดไปจะบันทึกเป็นรูปแบบใหม่' : 'เชื่อมต่อ Google Sheets แล้ว พร้อมบันทึก', 'success');
-      }
-      loadCategories();
+    }
+  }
+
+  // ฟังก์ชันจัดระเบียบข้อมูลเมื่อเชื่อมต่อสำเร็จ
+  function handleServerData(serverTasks) {
+    if ((!serverTasks || serverTasks.length === 0) && currentTasks.length > 0) {
+      // ถ้าบนฐานข้อมูลว่างเปล่า แต่ในเครื่องมีข้อมูล (ดันข้อมูลขึ้นไปบันทึก)
+      syncToDatabase();
+    } 
+    else if (serverTasks && serverTasks.length > 0) {
+      // ถ้าบนฐานข้อมูลมีข้อมูลครบถ้วน ให้นำมาโชว์ (ยึดฐานข้อมูลเป็นหลัก)
+      currentTasks = serverTasks;
+      saveData();
       renderTasks();
-    } catch (error) {
-      if (token !== loadToken) return;
-      isFetching = false;
-      loadError = true;
-      setStatus(`โหลดไม่สำเร็จ: ${error.message}${draft ? ' — ฉบับร่างยังอยู่ในหน้านี้' : ''}`, 'danger');
     }
   }
-  async function syncToDatabase() {
-    if (!dirty || isSaving || !activeRecord || conflict) return;
-    isSaving = true;
-    const payload = { monthYear: activeRecord.monthYear, fullName: activeRecord.fullName,
-      position: el('empPosition').value.trim(), employeeType: el('empType').value,
-      tasks: JSON.parse(JSON.stringify(currentTasks)), expectedRevision: revision };
-    setStatus('กำลังบันทึกไป Google Sheets… กรุณารอ');
-    try {
-      const result = await rpc('saveRecordToDatabase', payload);
-      if (!result || result.status !== 'success' || typeof result.revision !== 'string') {
-        conflict = result && result.status === 'conflict';
-        throw new Error(result && result.message || 'ไม่พบการยืนยันการบันทึก');
-      }
-      revision = result.revision;
-      dirty = false;
-      loadError = false;
-      isReady = true;
-      cacheRecord();
-      saveProfile();
-      isSaving = false;
-      setStatus('บันทึกลง Google Sheets สำเร็จ', 'success');
-    } catch (error) {
-      isSaving = false;
-      cacheRecord();
-      const backup = storageUnavailable ? 'อย่าปิดหน้านี้ กรุณาดาวน์โหลดฉบับร่างเก็บไว้' : 'เก็บฉบับร่างไว้ในเบราว์เซอร์แล้ว';
-      setStatus(`ยังไม่บันทึกลงชีต: ${error.message} — ${backup}`, 'danger');
+
+  // 💡 ส่งข้อมูลแบบทะลวง CORS Block (POST Text)
+  function syncToDatabase() {
+    const monthNum = parseInt(document.getElementById('selMonth').value);
+    const monthStr = thaiMonths[monthNum - 1];
+    const year = document.getElementById('selYear').value;
+    const payload = {
+      monthYear: `${monthStr} ${year}`,
+      fullName: document.getElementById('empName').value,
+      position: document.getElementById('empPosition').value,
+      empType: document.getElementById('empType').value,
+      tasks: currentTasks
+    };
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run.saveRecordToDatabase(payload);
+    } 
+    else if (WEB_APP_URL && WEB_APP_URL.startsWith("http")) {
+      // ยิง POST ผ่าน text/plain ทะลวงกำแพงเบราว์เซอร์ได้ 100%
+      fetch(WEB_APP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      }).catch(e => console.error("Sync error:", e));
     }
   }
-  function commitChanges() {
-    dirty = true;
-    cacheRecord();
-    renderTasks();
-    syncToDatabase();
-  }
-  function profileChanged() {
-    saveProfile();
-    if (canEdit()) commitChanges();
-  }
-  function retrySync() {
-    if (dirty) syncToDatabase(); else loadData();
-  }
-  function downloadDraft() {
-    if (!activeRecord) return;
-    const data = { monthYear: activeRecord.monthYear, fullName: activeRecord.fullName,
-      position: el('empPosition').value, employeeType: el('empType').value, tasks: currentTasks };
-    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], {type:'application/json;charset=utf-8'}));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `ฉบับร่าง_${activeRecord.year}_${activeRecord.month}.json`;
-    document.body.appendChild(link); link.click(); link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 10000);
-  }
-  async function discardDraft() {
-    if (!dirty || isSaving) return;
-    const answer = await Swal.fire({title:'โหลดข้อมูลจากชีตใหม่?', text:'ฉบับร่างที่ยังไม่บันทึกจะถูกแทนที่ กรุณาดาวน์โหลดฉบับร่างก่อนหากต้องการเก็บไว้', icon:'warning', showCancelButton:true, confirmButtonText:'โหลดจากชีตใหม่', cancelButtonText:'ยกเลิก'});
-    if (!answer.isConfirmed || isSaving) return;
-    dirty = false;
-    cacheRecord();
-    await loadData();
-  }
+
   function addTask() {
-    if (!canEdit()) return;
-    const detail = el('taskDetail').value.trim();
-    if (!detail) return Swal.fire('แจ้งเตือน','กรุณาระบุรายละเอียดงาน','warning');
-    let category = el('taskCategory').value;
-    if (category === 'NEW') {
-      const name = el('newCategoryInput').value.trim();
-      if (!name) return Swal.fire('แจ้งเตือน','กรุณาระบุชื่อหมวดหมู่ใหม่','warning');
-      const saved = customCategories();
-      const next = Math.max(0, ...[...defaultCategories,...saved,...currentTasks.map(t => t.category)].map(c => Number((c.match(/^\d+/) || ['0'])[0]))) + 1;
-      category = `${next}. ${name}`;
-      writeLocal('customCategories', [...saved, category]);
-      loadCategories();
-      el('taskCategory').value = category;
-      checkNewCategory();
-      el('newCategoryInput').value = '';
+    let cat = document.getElementById('taskCategory').value;
+    if(cat === "NEW") {
+      let rawCatName = document.getElementById('newCategoryInput').value.trim();
+      if(!rawCatName) return Swal.fire('แจ้งเตือน', 'กรุณาระบุชื่อหมวดหมู่ใหม่', 'warning');
+      
+      let savedCats = JSON.parse(localStorage.getItem('customCategories')) || [];
+      let totalCats = defaultCategories.length + savedCats.length;
+      let nextNum = totalCats + 1;
+      
+      cat = `${nextNum}. ${rawCatName}`;
+      
+      if(!savedCats.includes(cat) && !defaultCategories.includes(cat)) {
+        savedCats.push(cat);
+        localStorage.setItem('customCategories', JSON.stringify(savedCats));
+      }
+      loadCategories(); 
+      document.getElementById('taskCategory').value = cat;
+      checkNewCategory(); 
+      document.getElementById('newCategoryDiv').classList.add('d-none');
+      document.getElementById('newCategoryInput').value = "";
     }
-    if (detail.length > 10000 || category.length > 500) return Swal.fire('ข้อความยาวเกินไป','กรุณาแบ่งรายละเอียดเป็นรายการย่อย','warning');
-    const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    currentTasks.push({id, category, detail});
-    el('taskDetail').value = '';
-    commitChanges();
+
+    let detail = document.getElementById('taskDetail').value.trim();
+    if(!detail) return Swal.fire('แจ้งเตือน', 'กรุณาระบุรายละเอียดงาน', 'warning');
+
+    let newTask = { id: Date.now(), category: cat, detail: detail };
+    currentTasks.push(newTask);
+    saveData();
+    syncToDatabase(); 
+    
+    document.getElementById('taskDetail').value = "";
+    renderTasks();
   }
-  async function deleteTask(id) {
-    if (!canEdit()) return;
-    const token = loadToken;
-    const answer = await Swal.fire({title:'ลบรายการนี้?', icon:'warning', showCancelButton:true, confirmButtonText:'ลบ', cancelButtonText:'ยกเลิก'});
-    if (!answer.isConfirmed || token !== loadToken || !canEdit()) return;
-    currentTasks = currentTasks.filter(t => t.id !== id);
-    commitChanges();
+
+  function deleteTask(id) {
+    Swal.fire({
+      title: 'ลบรายการนี้?',
+      text: "คุณแน่ใจไหมว่าต้องการลบรายการนี้?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ff8787',
+      cancelButtonColor: '#adb5bd',
+      confirmButtonText: 'ลบเลย!',
+      cancelButtonText: 'ยกเลิก'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        currentTasks = currentTasks.filter(t => t.id !== id);
+        saveData();
+        syncToDatabase(); 
+        renderTasks();
+      }
+    });
   }
+  
   async function editTask(id) {
-    if (!canEdit()) return;
     const task = currentTasks.find(t => t.id === id);
-    if (!task) return;
-    const token = loadToken;
-    const answer = await Swal.fire({title:'✏️ แก้ไขผลงาน', input:'textarea', inputValue:task.detail,
-      showCancelButton:true, confirmButtonText:'บันทึก', cancelButtonText:'ยกเลิก',
-      inputValidator:value => !value.trim() ? 'กรุณาระบุรายละเอียดงาน' : value.length > 10000 ? 'ข้อความยาวเกินไป' : undefined});
-    if (!answer.isConfirmed || token !== loadToken || !canEdit()) return;
-    task.detail = answer.value.trim();
-    commitChanges();
+    if(!task) return;
+
+    const { value: newDetail } = await Swal.fire({
+      title: '✏️ แก้ไขผลงาน',
+      input: 'textarea',
+      inputValue: task.detail,
+      inputPlaceholder: 'ระบุรายละเอียดงานที่ทำ...',
+      showCancelButton: true,
+      confirmButtonColor: '#748ffc',
+      cancelButtonColor: '#adb5bd',
+      confirmButtonText: 'บันทึก',
+      cancelButtonText: 'ยกเลิก',
+      inputValidator: (value) => {
+        if (!value.trim()) return 'กรุณาระบุรายละเอียดงาน!'
+      }
+    });
+
+    if (newDetail) {
+      task.detail = newDetail.trim();
+      saveData();
+      syncToDatabase(); 
+      renderTasks();
+      Swal.fire({ icon: 'success', title: 'อัปเดตแล้ว!', showConfirmButton: false, timer: 1000 });
+    }
   }
+
   function moveTask(id, direction) {
-    if (!canEdit()) return;
     const index = currentTasks.findIndex(t => t.id === id);
     if (index < 0) return;
-    const step = direction === 'up' ? -1 : 1;
-    for (let target = index + step; target >= 0 && target < currentTasks.length; target += step) {
-      if (currentTasks[target].category === currentTasks[index].category) {
-        [currentTasks[index], currentTasks[target]] = [currentTasks[target], currentTasks[index]];
-        commitChanges(); return;
-      }
+    
+    const cat = currentTasks[index].category;
+    let targetIndex = -1;
+    
+    if (direction === 'up') {
+       for(let i = index - 1; i >= 0; i--) {
+          if(currentTasks[i].category === cat) { targetIndex = i; break; }
+       }
+    } else {
+       for(let i = index + 1; i < currentTasks.length; i++) {
+          if(currentTasks[i].category === cat) { targetIndex = i; break; }
+       }
+    }
+    
+    if (targetIndex !== -1) {
+       let temp = currentTasks[index];
+       currentTasks[index] = currentTasks[targetIndex];
+       currentTasks[targetIndex] = temp;
+       saveData();
+       syncToDatabase(); 
+       renderTasks();
     }
   }
+
+  function saveData() { localStorage.setItem(getStorageKey(), JSON.stringify(currentTasks)); }
+
   function renderTasks() {
-    const container = el('taskListContainer');
-    container.replaceChildren();
-    if (!currentTasks.length) {
-      const empty = document.createElement('div');
-      empty.className = 'text-muted text-center py-5 bg-white rounded-3 border';
-      empty.textContent = '☁️ ยังไม่มีผลงานในเดือนนี้';
-      container.appendChild(empty);
+    const container = document.getElementById('taskListContainer');
+    container.innerHTML = "";
+
+    if(currentTasks.length === 0) {
+      container.innerHTML = "<div class='text-muted text-center py-5 bg-white rounded-3 border' style='border-style: dashed !important;'><br>☁️ ยังไม่มีผลงานในเดือนนี้ <br>มาเริ่มต้นบันทึกกันเถอะ!<br><br></div>";
+      return;
     }
-    const groups = new Map();
-    currentTasks.forEach(task => {
-      if (!groups.has(task.category)) groups.set(task.category, []);
-      groups.get(task.category).push(task);
+
+    let grouped = {};
+    currentTasks.forEach(t => {
+      if(!grouped[t.category]) grouped[t.category] = [];
+      grouped[t.category].push(t);
     });
-    groups.forEach((tasks, category) => {
-      const section = document.createElement('section');
-      const heading = document.createElement('h6');
-      heading.className = 'mt-4 fw-bold text-primary border-bottom pb-2';
-      heading.textContent = category;
-      section.appendChild(heading);
-      tasks.forEach(task => {
-        const row = document.createElement('div');
-        row.className = 'task-item d-flex justify-content-between align-items-center gap-2';
-        const text = document.createElement('div');
-        text.className = 'task-detail';
-        text.textContent = task.detail;
-        const buttons = document.createElement('div');
-        buttons.className = 'btn-group bg-white rounded shadow-sm';
-        [['✏️','แก้ไข',() => editTask(task.id)],['🔼','เลื่อนขึ้น',() => moveTask(task.id,'up')],['🔽','เลื่อนลง',() => moveTask(task.id,'down')],['🗑️','ลบ',() => deleteTask(task.id)]].forEach(([label,title,callback]) => {
-          const button = document.createElement('button');
-          button.type = 'button'; button.className = 'btn btn-sm btn-light';
-          button.textContent = label; button.title = title;
-          button.setAttribute('aria-label', title);
-          button.setAttribute('data-edit',''); button.disabled = !canEdit();
-          button.addEventListener('click', callback); buttons.appendChild(button);
-        });
-        row.append(text, buttons); section.appendChild(row);
+
+    for (const [cat, tasks] of Object.entries(grouped)) {
+      let catDiv = document.createElement('div');
+      catDiv.innerHTML = `<h6 class="mt-4 fw-bold text-primary border-bottom pb-2" style="color: #5c7cfa !important;">${cat}</h6>`;
+      
+      tasks.forEach(t => {
+        catDiv.innerHTML += `
+          <div class="task-item d-flex justify-content-between align-items-center">
+            <div style="white-space: pre-wrap; flex-grow: 1;">${t.detail}</div>
+            <div class="btn-group ms-3 bg-white rounded shadow-sm">
+              <button class="btn btn-sm btn-light border-0" onclick="editTask(${t.id})" title="แก้ไข">✏️</button>
+              <button class="btn btn-sm btn-light border-0" onclick="moveTask(${t.id}, 'up')" title="เลื่อนขึ้น">🔼</button>
+              <button class="btn btn-sm btn-light border-0" onclick="moveTask(${t.id}, 'down')" title="เลื่อนลง">🔽</button>
+              <button class="btn btn-sm btn-light border-0 text-danger" onclick="deleteTask(${t.id})" title="ลบ">🗑️</button>
+            </div>
+          </div>
+        `;
       });
-      container.appendChild(section);
-    });
-    updateControls();
+      container.appendChild(catDiv);
+    }
   }
-  window.addEventListener('load', () => {
-    initSelects(); loadProfile(); loadCategories(); loadData();
-    el('empName').addEventListener('input', updateControls);
-    el('taskDetail').addEventListener('keydown', event => {
-      if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); addTask(); }
-    });
-  });
-  window.addEventListener('beforeunload', event => { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
-  // APP_CONTROLLER_END
 
   function toThaiNum(numStr) {
     const thaiNums = ['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙'];
     return numStr.toString().replace(/\d/g, d => thaiNums[d]);
   }
 
-  async function generateWord() {
-    if (!activeRecord || isFetching || (!isReady && !dirty) || activeRecord.key !== selectedRecord().key) {
-      return Swal.fire('กรุณารอ', 'โหลดรายงานให้สำเร็จก่อนส่งออกไฟล์', 'warning');
-    }
-    if (!window.docx || typeof saveAs !== 'function') {
-      return Swal.fire('โหลดเครื่องมือไม่สำเร็จ', 'กรุณาตรวจการเชื่อมต่ออินเทอร์เน็ตแล้วเปิดหน้าใหม่', 'error');
-    }
-    try {
+  function generateWord() {
     const docx = window.docx;
 
     function createRun(text, isBold = false, isUnderline = false) {
@@ -600,7 +562,7 @@
     const headerCellBorders = { bottom: bSingle };
     const footerCellBorders = { top: bSingle, bottom: bSingle };
 
-    let grouped = Object.create(null);
+    let grouped = {};
     let allCats = Array.from(document.getElementById('taskCategory').options).map(o => o.value).filter(v => v !== "NEW");
     allCats.forEach(c => grouped[c] = []); 
     currentTasks.forEach(t => {
@@ -635,7 +597,7 @@
       tableRows.push(new docx.TableRow({
         children: [
           new docx.TableCell({ children: [new docx.Paragraph({ children: [createRun(toThaiNum(cat), true)] })] }),
-        new docx.TableCell({ children: taskRuns.length ? taskRuns : [new docx.Paragraph('')] })
+          new docx.TableCell({ children: taskRuns })
         ]
       }));
     }
@@ -716,11 +678,9 @@
       }]
     });
 
-    const blob = await docx.Packer.toBlob(doc);
-    saveAs(blob, `รายงานผลการปฏิบัติงาน_${name}_${monthStr}_${yearBE}.docx`);
-    } catch (error) {
-      Swal.fire('สร้างไฟล์ Word ไม่สำเร็จ', error.message, 'error');
-    }
+    docx.Packer.toBlob(doc).then(blob => {
+      saveAs(blob, `รายงานผลการปฏิบัติงาน_${name}_${monthStr}.docx`);
+    });
   }
 </script>
 
